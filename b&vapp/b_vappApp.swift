@@ -11,7 +11,7 @@ import SwiftUI
 struct b_vappApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            OnboardingView()
         }
     }
 }
