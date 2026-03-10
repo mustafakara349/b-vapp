@@ -19,7 +19,7 @@ struct OnboardingView: View {
             if showMainView {
                 MainView()
             } else if showLogIn {
-                LogInView()
+                WelcomeView()
             } else {
                 TabView(selection: $currentPage) {
                     OnboardingViewModel(
@@ -65,7 +65,8 @@ struct OnboardingView: View {
                     Button(currentPage == 3 ? "Giriş Yap / Kaydol" : "Atla") {
                         showLogIn = true
                     }
-                    .font(.subheadline)
+                    .font(.default  )
+                    .foregroundColor(.yellow)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                     .background(.ultraThinMaterial)

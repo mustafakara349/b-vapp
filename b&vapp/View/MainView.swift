@@ -8,8 +8,27 @@
 import SwiftUI
 
 struct MainView: View {
+    @State private var goToMain = false
+
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        VStack {
+            Text("Main View")
+                .padding()
+            
+            Button {
+                do {
+                    try AuthManager.shared.signOut()
+                    goToMain = true
+                } catch {
+                    print("Çıkış yapılırken hata oluştu: \(error.localizedDescription)")
+                }
+            } label: {
+                Text("Çıkış Yap")
+                    .font(.largeTitle)
+            }
+        }.navigationDestination(isPresented: $goToMain) {
+            WelcomeView()
+        }
     }
 }
 
