@@ -10,6 +10,8 @@ import MapKit
 
 struct MainContentView: View {
     
+    @Binding var selectedTab: Tab
+
     var body: some View {
         
         ScrollView {
@@ -31,8 +33,10 @@ struct MainContentView: View {
             .padding(.top, 10)
         }
         .background(Color.black.ignoresSafeArea())
+        
     }
 }
+
 
 extension MainContentView {
     
@@ -40,10 +44,16 @@ extension MainContentView {
         
         HStack {
             
-            Image("icon")
-                .resizable()
-                .frame(width: 50, height: 50)
-                .clipShape(Circle())
+            Button {
+                selectedTab = .profile
+            } label: {
+                
+                Image("icon")
+                    .resizable()
+                    .frame(width: 50, height: 50)
+                    .clipShape(Circle())
+            }
+                
             
             VStack(alignment: .leading, spacing: 2) {
                 
@@ -59,13 +69,16 @@ extension MainContentView {
             
             Spacer()
             
-            ZStack {
-                Circle()
-                    .fill(Color.gray.opacity(0.2))
-                    .frame(width: 42, height: 42)
+            NavigationLink(destination: NotificationView()) {
                 
-                Image(systemName: "bell")
-                    .foregroundColor(.white)
+                ZStack {
+                    Circle()
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(width: 42, height: 42)
+                    
+                    Image(systemName: "bell")
+                        .foregroundColor(.white)
+                }
             }
         }
     }
@@ -133,7 +146,7 @@ extension MainContentView {
                     Spacer()
                     
                     Button {
-                        
+                        selectedTab = .appointments
                     } label: {
                         Text("Hemen Randevu Al")
                             .fontWeight(.semibold)
@@ -168,7 +181,7 @@ extension MainContentView {
                 Spacer()
                 
                 Button {
-                    
+                    selectedTab = .services
                 } label: {
                     Text("Tümünü Gör")
                         .foregroundColor(.yellow)
@@ -326,5 +339,5 @@ extension MainContentView {
     }
 }
 #Preview {
-    MainContentView()
+    MainContentView(selectedTab: .constant(.home))
 }

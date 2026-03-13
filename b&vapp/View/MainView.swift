@@ -9,33 +9,35 @@ import SwiftUI
 
 struct MainView: View {
     
+    @State private var selectedTab: Tab = .home
+    
     var body: some View {
         
-        TabView() {
+        TabView(selection: $selectedTab) {
             
-            MainContentView()
-                .tag(0)
+            MainContentView(selectedTab: $selectedTab)
+                .tag(Tab.home)
                 .tabItem {
                     Image(systemName: "house")
                     Text("Ana Sayfa")
                 }
             
             AppointmentsView()
-                .tag(1)
+                .tag(Tab.appointments)
                 .tabItem {
                     Image(systemName: "calendar")
                     Text("Randevular")
                 }
             
             ServicesView()
-                .tag(2)
+                .tag(Tab.services)
                 .tabItem {
                     Image(systemName: "scissors")
                     Text("Hizmetler")
                 }
-
+            
             ProfileView()
-                .tag(3)
+                .tag(Tab.profile)
                 .tabItem {
                     Image(systemName: "person.circle")
                     Text("Profil")
@@ -44,7 +46,7 @@ struct MainView: View {
     }
 }
 
-        
+
 #Preview {
     MainView()
 }
