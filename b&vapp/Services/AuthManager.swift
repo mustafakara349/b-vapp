@@ -8,17 +8,35 @@
 import Foundation
 import FirebaseAuth
 import FirebaseFirestore
+import Combine
 
-class AuthManager {
+class AuthManager: ObservableObject {
 
     static let shared = AuthManager()
 
     private let auth = Auth.auth()
     private let db = Firestore.firestore()
 
-    private init() {}
+    @Published var currentUserId: String?
+
+    private var authListener: AuthStateDidChangeListenerHandle?
+
+    private init() {
+        listenAuthState()
+    }
+
+    // MARK: - Auth State Listener
+
+    private func listenAuthState() {
+        authListener = auth.addStateDidChangeListener { _, user in
+            DispatchQueue.main.async {
+                self.currentUserId = user?.uid
+            }
+        }
+    }
 
     // MARK: - Kullanıcı Kaydı
+
     func signUp(email: String,
                 password: String,
                 name: String,
@@ -41,6 +59,7 @@ class AuthManager {
             ]
 
             self.db.collection("users").document(userId).setData(userData) { err in
+
                 if let err = err {
                     completion(.failure(err))
                 } else {
@@ -51,6 +70,7 @@ class AuthManager {
     }
 
     // MARK: - Giriş Yapma
+
     func signIn(email: String,
                 password: String,
                 completion: @escaping (Result<String, Error>) -> Void) {
@@ -69,12 +89,8 @@ class AuthManager {
     }
 
     // MARK: - Çıkış
+
     func signOut() throws {
         try auth.signOut()
-    }
-
-    // MARK: - Mevcut Kullanıcı
-    func getCurrentUserId() -> String? {
-        return auth.currentUser?.uid
     }
 }

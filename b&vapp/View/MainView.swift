@@ -8,30 +8,43 @@
 import SwiftUI
 
 struct MainView: View {
-    @State private var goToMain = false
-
+    
     var body: some View {
-        VStack {
-            Text("Main View")
-                .padding()
+        
+        TabView() {
             
-            Button {
-                do {
-                    try AuthManager.shared.signOut()
-                    goToMain = true
-                } catch {
-                    print("Çıkış yapılırken hata oluştu: \(error.localizedDescription)")
+            MainContentView()
+                .tag(0)
+                .tabItem {
+                    Image(systemName: "house")
+                    Text("Ana Sayfa")
                 }
-            } label: {
-                Text("Çıkış Yap")
-                    .font(.largeTitle)
-            }
-        }.navigationDestination(isPresented: $goToMain) {
-            WelcomeView()
+            
+            AppointmentsView()
+                .tag(1)
+                .tabItem {
+                    Image(systemName: "calendar")
+                    Text("Randevular")
+                }
+            
+            ServicesView()
+                .tag(2)
+                .tabItem {
+                    Image(systemName: "scissors")
+                    Text("Hizmetler")
+                }
+
+            ProfileView()
+                .tag(3)
+                .tabItem {
+                    Image(systemName: "person.circle")
+                    Text("Profil")
+                }
         }
     }
 }
 
+        
 #Preview {
     MainView()
 }

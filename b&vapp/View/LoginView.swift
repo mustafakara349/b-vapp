@@ -150,9 +150,7 @@ struct LoginView: View {
             .padding(.horizontal, 30)
         }
         .navigationBarTitleDisplayMode(.inline)
-        .navigationDestination(isPresented: $goToMain) {
-            MainView()
-        }
+        
     }
 }
 

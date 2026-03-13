@@ -9,20 +9,25 @@ import SwiftUI
 import FirebaseCore
 
 class AppDelegate: NSObject, UIApplicationDelegate {
-  func application(_ application: UIApplication,
-                   didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-    FirebaseApp.configure()
-
-    return true
-  }
+    
+    func application(_ application: UIApplication,
+                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+        
+        FirebaseApp.configure()
+        return true
+    }
 }
 
 @main
 struct b_vappApp: App {
+    
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+    @StateObject var authManager = AuthManager.shared
+    
     var body: some Scene {
         WindowGroup {
-            if AuthManager.shared.getCurrentUserId() != nil {
+            
+            if authManager.currentUserId != nil {
                 MainView()
             } else {
                 OnboardingView()
