@@ -27,7 +27,6 @@ class AuthViewModel: ObservableObject {
 
     // Kayıt sonrası onboarding navigasyonu için
     @Published var signUpSucceeded = false
-
     // MARK: - Security State
     @Published var currentPassword = ""
     @Published var newPassword = ""
@@ -98,7 +97,6 @@ class AuthViewModel: ObservableObject {
             showError(title: "Hata", message: "Lütfen geçerli bir telefon numarası girin.")
             return
         }
-
         isLoading = true
 
         AuthManager.shared.signUp(

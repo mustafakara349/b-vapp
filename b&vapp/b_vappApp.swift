@@ -30,6 +30,7 @@ struct b_vappApp: App {
         WindowGroup {
             ZStack {
                 if authManager.isCheckingAuth {
+                    // Splash — auth durumu kontrol edilirken
                     Color.black.ignoresSafeArea()
                         .transition(.opacity)
 
@@ -39,6 +40,7 @@ struct b_vappApp: App {
                         .transition(.opacity.animation(.easeIn(duration: 0.3)))
 
                 } else if authManager.currentUserId != nil {
+                    // Oturum açık — ana ekran
                     MainView()
                         .transition(
                             .asymmetric(
@@ -48,10 +50,13 @@ struct b_vappApp: App {
                         )
 
                 } else if !hasCompletedOnboarding {
+                    // İlk açılış — onboarding
                     OnboardingView()
                         .transition(.opacity)
 
                 } else {
+                    // Oturum kapalı — karşılama ekranı
+                    // Cross-dissolve: çıkış ekranından giriş ekranına yumuşak geçiş
                     WelcomeView()
                         .transition(
                             .asymmetric(
@@ -61,10 +66,10 @@ struct b_vappApp: App {
                         )
                 }
             }
+            // Auth state değişiminde tüm geçişleri animasyonlu yap
             .animation(.easeInOut(duration: 0.4), value: authManager.currentUserId)
             .animation(.easeInOut(duration: 0.3), value: authManager.isCheckingAuth)
             .animation(.easeInOut(duration: 0.35), value: authManager.isNewlyRegistered)
-
         }
     }
 }
