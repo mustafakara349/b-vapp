@@ -9,94 +9,151 @@ import SwiftUI
 import MapKit
 
 struct MainContentView: View {
-    
+
     @Binding var selectedTab: Tab
+    @EnvironmentObject var viewModel: HomeViewModel
+    @State private var goToAppointment: Bool = false
 
     var body: some View {
-        
-        ScrollView {
-            
-            VStack(spacing: 28) {
-                
-                headerSection
-                    .padding(.horizontal, 20)
-                
-                promoCard
-                    .padding(.horizontal, 20)
-                
-                servicesSection
-                
-                directionCard
-                    .padding(.horizontal, 20)
-                
+
+        Group {
+            if viewModel.isLoading {
+                // Veriler hazır olana kadar loading spinner
+                VStack {
+                    Spacer()
+                    ProgressView()
+                        .scaleEffect(1.4)
+                        .tint(.yellow)
+                    Text("Yükleniyor...")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 8)
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    VStack(spacing: 28) {
+
+                        headerSection
+                            .padding(.horizontal, 20)
+
+                        promoCard
+                            .padding(.horizontal, 20)
+
+                        servicesSection
+
+                        directionCard
+                            .padding(.horizontal, 20)
+                    }
+                    .padding(.top, 10)
+                }
             }
-            .padding(.top, 10)
         }
-        .background(Color.black.ignoresSafeArea())
-        
+        .background(Color(.systemBackground).ignoresSafeArea())
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.visible, for: .tabBar)
+        .task {
+            await viewModel.fetchHomeData()
+        }
     }
 }
 
 
+// MARK: - Header
+
 extension MainContentView {
     
+    @ViewBuilder
     var headerSection: some View {
-        
-        HStack {
-            
-            Button {
-                selectedTab = .profile
-            } label: {
-                
-                Image("icon")
-                    .resizable()
+
+        // Kullanıcı verisi yüklenene kadar shimmer skeleton
+        if viewModel.user == nil {
+            ShimmerHeaderSkeleton()
+        } else {
+            HStack {
+
+                Button {
+                    selectedTab = .profile
+                } label: {
+                    // Profil fotoğrafı varsa CachedAsyncImage, yoksa initials
+                    Group {
+                        if let urlStr = viewModel.user?.profileImageUrl,
+                           !urlStr.isEmpty,
+                           let url = URL(string: urlStr) {
+                            CachedAsyncImage(url: url) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .scaledToFill()
+                                default:
+                                    initialsAvatar
+                                }
+                            }
+                        } else {
+                            initialsAvatar
+                        }
+                    }
                     .frame(width: 50, height: 50)
                     .clipShape(Circle())
-            }
-                
-            
-            VStack(alignment: .leading, spacing: 2) {
-                
-                Text("Hoş geldin,")
-                    .foregroundColor(.yellow)
-                    .font(.subheadline)
-                
-                Text("Mustafa KARA")
-                    .foregroundColor(.white)
-                    .font(.title3)
-                    .fontWeight(.semibold)
-            }
-            
-            Spacer()
-            
-            NavigationLink(destination: NotificationView()) {
-                
-                ZStack {
-                    Circle()
-                        .fill(Color.gray.opacity(0.2))
-                        .frame(width: 42, height: 42)
-                    
-                    Image(systemName: "bell")
-                        .foregroundColor(.white)
+                    .overlay(Circle().stroke(Color.yellow.opacity(0.5), lineWidth: 2))
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Hoş geldin,")
+                        .foregroundColor(.yellow)
+                        .font(.subheadline)
+
+                    Text(viewModel.userName)
+                        .foregroundColor(.primary)
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                }
+
+                Spacer()
+
+                NavigationLink(destination: NotificationView()) {
+                    ZStack {
+                        Circle()
+                            .fill(Color(.systemGray5))
+                            .frame(width: 42, height: 42)
+                        Image(systemName: "bell")
+                            .foregroundColor(.primary)
+                    }
                 }
             }
         }
     }
+    // Initials avatar (profil URL yoksa gösterilen)
+    private var initialsAvatar: some View {
+        ZStack {
+            Circle().fill(Color.yellow.opacity(0.2))
+            Text(viewModel.user?.initials ?? "B")
+                .font(.headline)
+                .fontWeight(.bold)
+                .foregroundColor(.yellow)
+        }
+    }
 }
 
 
+// MARK: - Promo Card
+
 extension MainContentView {
+
     var promoCard: some View {
-        
+
         ZStack {
-            
+
             Image("promoBackground")
                 .resizable()
                 .scaledToFill()
                 .frame(height: 180)
                 .clipped()
-                .opacity(0.25)
-            
+                .opacity(0.2)
+
             RoundedRectangle(cornerRadius: 22)
                 .fill(
                     LinearGradient(
@@ -105,48 +162,52 @@ extension MainContentView {
                         endPoint: .trailing
                     )
                 )
-            
+
             VStack(alignment: .leading, spacing: 14) {
-                
-                Text("B&V COFFE BARBER")
+
+                Text("B&V COFFEE BARBER")
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
-                
+
                 Text("Usta ellerden profesyonel tasarım ve bakım hizmeti alın.")
                     .foregroundColor(.gray)
                     .font(.subheadline)
                     .fixedSize(horizontal: false, vertical: true)
-                
+
                 HStack {
-                    
+
+                    // Berber avatarları (initials)
                     HStack(spacing: -10) {
-                        
-                        Image("icon")
-                            .resizable()
-                            .frame(width: 32, height: 32)
-                            .clipShape(Circle())
-                        
-                        Image("icon")
-                            .resizable()
-                            .frame(width: 32, height: 32)
-                            .clipShape(Circle())
-                        
-                        ZStack {
-                            Circle()
-                                .fill(Color.yellow)
-                                .frame(width: 32, height: 32)
-                            
-                            Text("+3")
-                                .font(.caption)
-                                .fontWeight(.bold)
+                        ForEach(viewModel.barbers.prefix(3)) { barber in
+                            ZStack {
+                                Circle()
+                                    .fill(Color.yellow.opacity(0.3))
+                                    .frame(width: 32, height: 32)
+                                Text(barber.initials)
+                                    .font(.caption2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                            }
+                        }
+
+                        if viewModel.barbers.count > 3 {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.yellow)
+                                    .frame(width: 32, height: 32)
+                                Text("+\(viewModel.barbers.count - 3)")
+                                    .font(.caption2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.black)
+                            }
                         }
                     }
-                    
+
                     Spacer()
-                    
+
                     Button {
-                        selectedTab = .appointments
+                        goToAppointment = true
                     } label: {
                         Text("Hemen Randevu Al")
                             .fontWeight(.semibold)
@@ -155,6 +216,9 @@ extension MainContentView {
                             .background(Color.yellow)
                             .foregroundColor(.black)
                             .cornerRadius(10)
+                    }
+                    .navigationDestination(isPresented: $goToAppointment) {
+                        SelectAppointmentView()
                     }
                 }
             }
@@ -165,21 +229,23 @@ extension MainContentView {
     }
 }
 
+
+// MARK: - Services Section
+
 extension MainContentView {
-    
+
     var servicesSection: some View {
-        
+
         VStack(alignment: .leading, spacing: 16) {
-            
+
             HStack {
-                
                 Text("Hizmetlerimiz")
-                    .foregroundColor(.white)
+                    .foregroundColor(.primary)
                     .font(.title3)
                     .fontWeight(.bold)
-                
+
                 Spacer()
-                
+
                 Button {
                     selectedTab = .services
                 } label: {
@@ -189,102 +255,86 @@ extension MainContentView {
                 }
             }
             .padding(.horizontal, 20)
-            
-            
+
             ScrollView(.horizontal, showsIndicators: false) {
-                
                 HStack(spacing: 16) {
-                    
-                    serviceCard(
-                        image: "barber1",
-                        price: "₺350",
-                        title: "Saç Kesimi",
-                        duration: "45 dk"
-                    )
-                    
-                    serviceCard(
-                        image: "barber3",
-                        price: "₺200",
-                        title: "Sakal Tıraşı",
-                        duration: "30 dk"
-                    )
-                    
-                    serviceCard(
-                        image: "barber1",
-                        price: "₺500",
-                        title: "Cilt Bakımı",
-                        duration: "60 dk"
-                    )
+                    if viewModel.services.isEmpty {
+                        // Hizmetler yüklenirken 3 skeleton kart göster
+                        ForEach(0..<3, id: \.self) { _ in
+                            ShimmerServiceCard()
+                        }
+                    } else {
+                        ForEach(viewModel.services.prefix(5)) { service in
+                            serviceCard(service: service)
+                        }
+                    }
                 }
                 .padding(.leading, 20)
             }
         }
-    }}
+    }
 
+    func serviceCard(service: Service) -> some View {
 
-extension MainContentView {
-    
-    func serviceCard(image: String, price: String, title: String, duration: String) -> some View {
-        
         VStack(alignment: .leading, spacing: 8) {
-            
+
             ZStack(alignment: .bottomLeading) {
-                
-                Image(image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 160, height: 180)
-                    .clipped()
-                    .cornerRadius(16)
-                
-                Text(price)
+
+                // CachedAsyncImage: önbelleğe alınan görsel
+                CachedAsyncImage(url: URL(string: service.imageUrl)) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image.resizable().scaledToFill()
+                    case .empty:
+                        // Yükleniyor — shimmer placeholder
+                        ShimmerCard(width: 160, height: 180, cornerRadius: 16)
+                    default:
+                        ZStack {
+                            Color.gray.opacity(0.2)
+                            Image(systemName: "scissors").foregroundColor(.gray)
+                        }
+                    }
+                }
+                .frame(width: 160, height: 180)
+                .clipped()
+                .cornerRadius(16)
+
+                Text("₺\(service.price)")
                     .foregroundColor(.yellow)
                     .fontWeight(.bold)
                     .padding(8)
             }
-            
-            Text(title)
-                .foregroundColor(.white)
+
+            Text(service.name)
+                .foregroundColor(.primary)
                 .fontWeight(.semibold)
-            
-            /*HStack {
-                Image(systemName: "clock")
-                    .foregroundColor(.gray)
-                
-                Text(duration)
-                    .foregroundColor(.gray)
-                    .font(.caption)
-            }*/
+                .lineLimit(1)
         }
         .frame(width: 160)
     }
 }
 
 
+// MARK: - Direction Card
+
 extension MainContentView {
-    
+
     var directionCard: some View {
-        
-        let location = CLLocationCoordinate2D(
-            latitude: 36.9238616,
-            longitude: 34.9011379
-        )
-        
+
+        let location = CLLocationCoordinate2D(latitude: 36.9238616, longitude: 34.9011379)
+
         return ZStack {
-            
+
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color.gray.opacity(0.25))
-            
+                .fill(Color.gray.opacity(0.2))
+
             HStack(spacing: 16) {
-                
+
                 Map(position: .constant(
                     MapCameraPosition.region(
                         MKCoordinateRegion(
                             center: location,
-                            span: MKCoordinateSpan(
-                                latitudeDelta: 0.003,
-                                longitudeDelta: 0.003
-                            )
+                            span: MKCoordinateSpan(latitudeDelta: 0.003, longitudeDelta: 0.003)
                         )
                     )
                 )) {
@@ -293,25 +343,22 @@ extension MainContentView {
                 .mapStyle(.hybrid)
                 .frame(width: 100, height: 80)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
-                
+
                 VStack(alignment: .leading, spacing: 6) {
-                    
                     Text("B&V COFFEE BARBER")
-                        .foregroundColor(.white)
+                        .foregroundColor(.primary)
                         .fontWeight(.bold)
-                        
-                    
+
                     Text("Fatih Mah. Çağlayan Cad. No:39D/B Tarsus/Mersin")
-                        .foregroundColor(.gray)
+                        .foregroundColor(.secondary)
                         .font(.caption2)
                 }
-                
+
                 Spacer()
-                
+
                 Button {
-                    openMaps()
+                    viewModel.openMaps()
                 } label: {
-                    
                     Image(systemName: "arrow.triangle.turn.up.right.diamond.fill")
                         .foregroundColor(.white)
                         .font(.system(size: 20))
@@ -323,21 +370,10 @@ extension MainContentView {
             .padding(16)
         }
         .frame(height: 120)
-        
-        func openMaps() {
-            
-            let latitude: CLLocationDegrees = 36.9238616
-            let longitude: CLLocationDegrees = 34.9011379
-            
-            let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-            
-            let mapItem = MKMapItem(placemark: MKPlacemark(coordinate: coordinate))
-            mapItem.name = "B&V Berber"
-            
-            mapItem.openInMaps()
-        }
     }
 }
+
+
 #Preview {
     MainContentView(selectedTab: .constant(.home))
 }
