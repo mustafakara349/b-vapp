@@ -22,6 +22,8 @@ struct Appointment: Identifiable, Codable {
     var price: Int
     var status: String          // "active", "cancelled", "completed"
 
+    var reminderSent: Bool?     // Cloud Function CRON tarafından true yapılır
+
     var createdAt: Date?
     var updatedAt: Date?
 

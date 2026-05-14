@@ -9,28 +9,52 @@ import SwiftUI
 import FirebaseCore
 import Combine
 
+// MARK: - AppDelegate
+
 class AppDelegate: NSObject, UIApplicationDelegate {
-    
-    func application(_ application: UIApplication,
-                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-        
+
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
+        // 1) Firebase'i yapılandır
         FirebaseApp.configure()
+        // 2) FCM + UNUserNotificationCenter delegate'lerini ata
+        NotificationManager.shared.configure()
         return true
+    }
+
+    // MARK: APNs Token → Firebase
+
+    func application(
+        _ application: UIApplication,
+        didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+    ) {
+        NotificationManager.shared.setAPNsToken(deviceToken)
+    }
+
+    func application(
+        _ application: UIApplication,
+        didFailToRegisterForRemoteNotificationsWithError error: Error
+    ) {
+        print("[AppDelegate] APNs kaydı başarısız: \(error.localizedDescription)")
     }
 }
 
+// MARK: - App Entry Point
+
 @main
 struct b_vappApp: App {
-    
+
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject var authManager = AuthManager.shared
+    @StateObject var notificationManager = NotificationManager.shared
     @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
-    
+
     var body: some Scene {
         WindowGroup {
             ZStack {
                 if authManager.isCheckingAuth {
-                    // Splash — auth durumu kontrol edilirken
                     Color.black.ignoresSafeArea()
                         .transition(.opacity)
 
@@ -40,7 +64,6 @@ struct b_vappApp: App {
                         .transition(.opacity.animation(.easeIn(duration: 0.3)))
 
                 } else if authManager.currentUserId != nil {
-                    // Oturum açık — ana ekran
                     MainView()
                         .transition(
                             .asymmetric(
@@ -50,13 +73,10 @@ struct b_vappApp: App {
                         )
 
                 } else if !hasCompletedOnboarding {
-                    // İlk açılış — onboarding
                     OnboardingView()
                         .transition(.opacity)
 
                 } else {
-                    // Oturum kapalı — karşılama ekranı
-                    // Cross-dissolve: çıkış ekranından giriş ekranına yumuşak geçiş
                     WelcomeView()
                         .transition(
                             .asymmetric(
@@ -66,10 +86,18 @@ struct b_vappApp: App {
                         )
                 }
             }
-            // Auth state değişiminde tüm geçişleri animasyonlu yap
             .animation(.easeInOut(duration: 0.4), value: authManager.currentUserId)
             .animation(.easeInOut(duration: 0.3), value: authManager.isCheckingAuth)
             .animation(.easeInOut(duration: 0.35), value: authManager.isNewlyRegistered)
+            // Kullanıcı giriş yaptığında veya yeni kayıt olduğunda:
+            // izin durumuna bakılmaksızın APNs→FCM token zincirini başlat.
+            .onChange(of: authManager.currentUserId) { _, newUserId in
+                if newUserId != nil {
+                    Task {
+                        await notificationManager.activateRemoteNotifications()
+                    }
+                }
+            }
         }
     }
 }

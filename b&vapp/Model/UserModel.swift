@@ -7,6 +7,7 @@
 
 import Foundation
 import FirebaseFirestore
+import Combine
 
 struct UserModel: Identifiable, Codable {
 
@@ -19,6 +20,8 @@ struct UserModel: Identifiable, Codable {
     var phone: String
     var profileImageUrl: String
     var role: String            // "customer", "admin", "barber"
+
+    var fcmToken: String?
 
     var createdAt: Date?
     var updatedAt: Date?
